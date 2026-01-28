@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: week1-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: week1-web
+  template:
+    metadata:
+      labels:
+        app: week1-web
+    spec:
+      containers:
+        - name: week1-web
+          image: mindxweek1acr123.azurecr.io/week1-web:1.0
+          ports:
+            - containerPort: 80

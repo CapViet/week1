@@ -1,24 +1,7 @@
-# 1. Build stage
-FROM node:20-alpine AS builder
+FROM nginx:alpine
 
-WORKDIR /app
+COPY dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-COPY package*.json ./
-RUN npm install
-
-COPY . .
-RUN npm run build
-
-
-# 2. Runtime stage
-FROM node:20-alpine
-
-WORKDIR /app
-
-RUN npm install -g serve
-
-COPY --from=builder /app/dist ./dist
-
-EXPOSE 8080
-
-CMD ["serve", "-s", "dist", "-l", "8080"]
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
