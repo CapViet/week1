@@ -5,17 +5,15 @@ const app = express();
 
 const PORT = Number(process.env.PORT) || 8080;
 
-// 🔐 CORS — THIS IS THE FIX
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://week1-nu.vercel.app" // keep if using Vercel
+    "https://week1-nu.vercel.app" 
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
-// 🔁 Handle preflight explicitly
 app.options("*", cors());
 
 app.get("/", (_req, res) => {
@@ -26,9 +24,19 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
-// (keep your protected route if you have one)
-// app.get("/protected", authMiddleware, ...)
+app.get("/protected", (req, res) => {
+  const auth = req.headers.authorization;
+
+  if (!auth) {
+    return res.status(401).json({ message: "Missing token" });
+  }
+
+  res.json({ message: "Protected" });
+});
+
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`API running on port ${PORT}`);
 });
+
+
