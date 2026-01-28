@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: week1-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: week1-api
+  template:
+    metadata:
+      labels:
+        app: week1-api
+    spec:
+      imagePullSecrets:
+        - name: acr-secret
+      containers:
+        - name: week1-api
+          image: mindxweek1acr123.azurecr.io/week1-api:1.0
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
