@@ -4,7 +4,6 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 
 const app = express();
 
-const PORT = Number(process.env.PORT) || 8080;
 const JWT_SECRET = process.env.JWT_SECRET || "dev-secret";
 
 // --------------------
@@ -27,7 +26,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://week1-nu.vercel.app",
+      "https://week1-nu.vercel.app"
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -74,7 +73,7 @@ app.get("/health", (_req: Request, res: Response) => {
   res.json({ status: "ok" });
 });
 
-// 🔐 Fake login (temporary)
+// 🔐 Fake login
 app.post("/auth/login", (_req: Request, res: Response) => {
   const token = jwt.sign(
     { id: "demo-user", name: "Demo User" },
@@ -101,6 +100,6 @@ app.get("/protected", requireAuth, (req: Request, res: Response) => {
 });
 
 // --------------------
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`API running on port ${PORT}`);
-});
+// IMPORTANT: export app for Vercel
+// --------------------
+export default app;
