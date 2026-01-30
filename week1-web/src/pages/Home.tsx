@@ -1,20 +1,20 @@
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../auth/AuthContext';
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext";
 
 export default function Home() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogin = () => {
-    login('fake-token');
-    navigate('/dashboard');
-  };
+  async function handleLogin() {
+    await login();           // calls backend
+    navigate("/dashboard"); // go to protected page
+  }
 
   return (
     <>
       <h2>Public Home</h2>
       <button onClick={handleLogin}>
-        Login (fake)
+        Login
       </button>
     </>
   );

@@ -1,27 +1,21 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+export const API_BASE =
+  import.meta.env.VITE_API_URL || "http://localhost:8080";
 
-export async function apiFetch(
-  path: string,
-  options: RequestInit = {}
-) {
-  const token = localStorage.getItem('access_token');
+export async function apiFetch(path: string, options: RequestInit = {}) {
+  const token = localStorage.getItem("token");
 
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...options.headers,
-  };
-
-  const res = await fetch(`${API_BASE_URL}${path}`, {
+  const res = await fetch(`${API_BASE}${path}`, {
     ...options,
-    headers,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
   });
 
-  if (res.status === 401) {
-    localStorage.removeItem('access_token');
-    window.location.href = '/';
-    throw new Error('Unauthorized');
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "API error");
   }
 
-  return res;
+  return res.json();
 }
