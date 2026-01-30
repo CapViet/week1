@@ -1,36 +1,22 @@
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../auth/AuthContext';
-import { apiFetch } from '../api/client';
+import { useState } from "react";
+import { apiFetch } from "../api/client";
+import { useAuth } from "../auth/AuthContext";
 
 export default function Dashboard() {
   const { logout } = useAuth();
-  const navigate = useNavigate();
+  const [msg, setMsg] = useState("");
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
-
-  const testApi = async () => {
-    try {
-      const res = await apiFetch('/protected');
-      console.log('API status:', res.status);
-    } catch (err) {
-      console.error('API error:', err);
-    }
-  };
+  async function testApi() {
+    const res = await apiFetch("/protected");
+    setMsg(res.message);
+  }
 
   return (
     <>
-      <h2>Protected Dashboard</h2>
-
-      <button onClick={testApi}>
-        Test API
-      </button>
-
-      <button onClick={handleLogout}>
-        Logout
-      </button>
+      <h2>Dashboard</h2>
+      <button onClick={testApi}>Test API</button>
+      <button onClick={logout}>Logout</button>
+      <p>{msg}</p>
     </>
   );
 }

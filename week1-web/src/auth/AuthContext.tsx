@@ -1,43 +1,70 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from "react";
+import { jwtDecode } from "jwt-decode";
+
+type User = {
+  id: string;
+  name: string;
+  exp: number;
+};
 
 type AuthContextType = {
-  isAuthenticated: boolean;
   token: string | null;
+  user: User | null;
+  isAuthenticated: boolean;
   isLoading: boolean;
-  login: (token: string) => void;
+  login: () => Promise<void>;
   logout: () => void;
 };
 
-const AuthContext = createContext<AuthContextType | null>(null);
-
-const TOKEN_KEY = 'access_token';
+const AuthContext = createContext<AuthContextType>(null!);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Restore session
   useEffect(() => {
-    const stored = localStorage.getItem(TOKEN_KEY);
-    if (stored) {
-      setToken(stored);
+    const saved = localStorage.getItem("token");
+    if (saved) {
+      try {
+        const decoded = jwtDecode<User>(saved);
+        setToken(saved);
+        setUser(decoded);
+      } catch {
+        localStorage.removeItem("token");
+      }
     }
     setIsLoading(false);
   }, []);
 
-  const login = (token: string) => {
-    localStorage.setItem(TOKEN_KEY, token);
-    setToken(token);
-  };
+  async function login() {
+    const res = await fetch(
+      `${import.meta.env.VITE_API_URL}/auth/login`,
+      { method: "POST" }
+    );
 
-  const logout = () => {
-    localStorage.removeItem(TOKEN_KEY);
+    if (!res.ok) throw new Error("Login failed");
+
+    const data = await res.json();
+    const decoded = jwtDecode<User>(data.token);
+
+    localStorage.setItem("token", data.token);
+    setToken(data.token);
+    setUser(decoded);
+  }
+
+  function logout() {
+    localStorage.removeItem("token");
     setToken(null);
-  };
+    setUser(null);
+  }
 
   return (
     <AuthContext.Provider
       value={{
         token,
+        user,
         isAuthenticated: !!token,
         isLoading,
         login,
@@ -49,8 +76,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
-  return ctx;
-}
+export const useAuth = () => useContext(AuthContext);
