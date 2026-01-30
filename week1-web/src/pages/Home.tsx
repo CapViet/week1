@@ -1,22 +1,21 @@
-import { useState } from "react";
-import { apiFetch } from "../api/client";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 
-export default function Dashboard() {
-  const { logout } = useAuth();
-  const [msg, setMsg] = useState("");
+export default function Home() {
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
-  async function testApi() {
-    const res = await apiFetch("/protected");
-    setMsg(res.message);
+  async function handleLogin() {
+    await login();           
+    navigate("/dashboard"); 
   }
 
   return (
     <>
-      <h2>Dashboard</h2>
-      <button onClick={testApi}>Test API</button>
-      <button onClick={logout}>Logout</button>
-      <p>{msg}</p>
+      <h2>Public Home</h2>
+      <button onClick={handleLogin}>
+        Login
+      </button>
     </>
   );
 }
