@@ -6,8 +6,8 @@ export default function Home() {
   const navigate = useNavigate();
 
   async function handleLogin() {
-    await login();           // calls backend
-    navigate("/dashboard"); // go to protected page
+    await login();           
+    navigate("/dashboard"); 
   }
 
   return (

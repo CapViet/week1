@@ -12,8 +12,10 @@ spec:
       labels:
         app: week1-web
     spec:
+      imagePullSecrets:
+        - name: acr-secret   
       containers:
         - name: week1-web
-          image: mindxweek1acr123.azurecr.io/week1-web:1.0
+          image: mindxweek1acr123.azurecr.io/week1-web:clean
           ports:
             - containerPort: 80
