@@ -1,14 +1,13 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './auth/AuthContext';
-import Home from './pages/Home';
-import Dashboard from './pages/Dashboard';
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "./auth/AuthContext";
+import Home from "./pages/Home";
+import Dashboard from "./pages/Dashboard";
+import LoginSuccess from "./pages/LoginSuccess";
 
 function App() {
   const { isAuthenticated, isLoading } = useAuth();
 
-  if (isLoading) {
-    return <div>Loading auth...</div>;
-  }
+  if (isLoading) return <div>Loading auth...</div>;
 
   return (
     <div style={{ padding: 40 }}>
@@ -16,10 +15,12 @@ function App() {
 
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/login-success" element={<LoginSuccess />} />
+
         <Route
           path="/dashboard"
           element={
-            isAuthenticated ? <Dashboard /> : <Navigate to="/" />
+            isAuthenticated ? <Dashboard /> : <Navigate to="/" replace />
           }
         />
       </Routes>

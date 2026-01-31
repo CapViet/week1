@@ -16,9 +16,37 @@ spec:
         - name: acr-secret
       containers:
         - name: week1-api
-          image: mindxweek1acr123.azurecr.io/week1-api:clean
+          image: mindxweek1acr123.azurecr.io/week1-api:openID
           ports:
             - containerPort: 8080
+
           env:
+            # App
             - name: PORT
               value: "8080"
+
+            # JWT 
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_SECRET
+
+            # OpenID
+            - name: OIDC_CLIENT_ID
+              value: "mindx-onboarding"
+
+            - name: OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: oidc-secret
+                  key: client-secret
+
+            - name: OIDC_ISSUER
+              value: "https://id-dev.mindx.edu.vn"
+
+            - name: OIDC_REDIRECT_URI
+              value: "http://20.239.116.330/auth/callback"
+
+            - name: FRONTEND_URL
+              value: "http://20.239.116.330"

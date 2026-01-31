@@ -16,6 +16,10 @@ spec:
         - name: acr-secret   
       containers:
         - name: week1-web
-          image: mindxweek1acr123.azurecr.io/week1-web:clean
+          image: mindxweek1acr123.azurecr.io/week1-web:openID
           ports:
             - containerPort: 80
+
+          env:
+            - name: VITE_API_URL
+              value: "http://20.239.116.330"

@@ -4,6 +4,7 @@ import { jwtDecode } from "jwt-decode";
 type User = {
   id: string;
   name: string;
+  email?: string;
   exp: number;
 };
 
@@ -12,7 +13,7 @@ type AuthContextType = {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: () => Promise<void>;
+  login: () => void;
   logout: () => void;
 };
 
@@ -23,15 +24,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Restore session safely
   useEffect(() => {
-    const saved = localStorage.getItem("token");
+    const params = new URLSearchParams(window.location.search);
+    const incoming = params.get("token");
 
+    if (incoming) {
+      const decoded = jwtDecode<User>(incoming);
+
+      localStorage.setItem("token", incoming);
+      setToken(incoming);      
+      setUser(decoded);      
+      window.history.replaceState({}, "", "/dashboard");
+      setIsLoading(false);
+      return;
+    }
+
+    const saved = localStorage.getItem("token");
     if (saved) {
       try {
         const decoded = jwtDecode<User>(saved);
 
-        // If expired → force logout
         if (decoded.exp * 1000 < Date.now()) {
           localStorage.removeItem("token");
         } else {
@@ -46,27 +58,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  async function login() {
-    const res = await fetch(
-      `${import.meta.env.VITE_API_URL}/auth/login`,
-      { method: "POST" }
-    );
 
-    if (!res.ok) throw new Error("Login failed");
-
-    const data = await res.json();
-    const decoded = jwtDecode<User>(data.token);
-
-    localStorage.setItem("token", data.token);
-    setToken(data.token);
-    setUser(decoded);
+  function login() {
+    // Redirect to backend OpenID login
+    window.location.href = `${import.meta.env.VITE_API_URL}/auth/login`;
   }
 
   function logout() {
     localStorage.removeItem("token");
     setToken(null);
     setUser(null);
+
+    // open MindX logout in a new tab instead of redirect
+    window.open("https://id-dev.mindx.edu.vn/session/end", "_blank");
+
+    // stay in your app
+    window.location.href = "/";
   }
+
+
+
 
   return (
     <AuthContext.Provider

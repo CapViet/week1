@@ -1,21 +1,21 @@
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../auth/AuthContext";
-
 export default function Home() {
-  const { login } = useAuth();
-  const navigate = useNavigate();
-
-  async function handleLogin() {
-    await login();           
-    navigate("/dashboard"); 
-  }
-
   return (
     <>
       <h2>Public Home</h2>
-      <button onClick={handleLogin}>
-        Login
-      </button>
+
+      <a
+        href={`${import.meta.env.VITE_API_URL}/auth/login`}
+        style={{
+          padding: "10px 16px",
+          background: "#333",
+          color: "white",
+          borderRadius: 6,
+          textDecoration: "none",
+          display: "inline-block",
+        }}
+      >
+        Login with MindX
+      </a>
     </>
   );
 }

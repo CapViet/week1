@@ -1,5 +1,5 @@
 export const API_BASE =
-  import.meta.env.VITE_API_URL || "http://localhost:8080";
+import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 export async function apiFetch(path: string, options: RequestInit = {}) {
   const token = localStorage.getItem("token");

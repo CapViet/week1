@@ -5,11 +5,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.requireAuth = requireAuth;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
     throw new Error("JWT_SECRET not set in .env");
 }
-// 👇 Narrow type for TypeScript
 const SECRET = JWT_SECRET;
 function requireAuth(req, res, next) {
     const header = req.headers.authorization;

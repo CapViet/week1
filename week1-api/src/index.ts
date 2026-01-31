@@ -1,35 +1,48 @@
-import dotenv from "dotenv";
-dotenv.config();
-
 import express from "express";
 import cors from "cors";
+import axios from "axios";
+import qs from "qs";
 import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
 import { requireAuth } from "./middleware/requireAuth";
 
-const app = express();
-const PORT = Number(process.env.PORT) || 8080;
+dotenv.config();
 
-// Load and validate secret
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  throw new Error("JWT_SECRET not set in environment");
+const app = express();
+const PORT = Number(process.env.PORT) || 3000;
+
+const {
+  OIDC_ISSUER,
+  OIDC_CLIENT_ID,
+  OIDC_CLIENT_SECRET,
+  OIDC_REDIRECT_URI,
+  FRONTEND_URL,
+  JWT_SECRET,
+} = process.env;
+
+if (
+  !OIDC_ISSUER ||
+  !OIDC_CLIENT_ID ||
+  !OIDC_CLIENT_SECRET ||
+  !OIDC_REDIRECT_URI ||
+  !FRONTEND_URL ||
+  !JWT_SECRET
+) {
+  throw new Error("Missing required env variables");
 }
-const SECRET: string = JWT_SECRET;
 
 app.use(express.json());
 
 app.use(
   cors({
     origin: [
+      FRONTEND_URL,
       "http://localhost:5173",
       "https://week1-nu.vercel.app",
     ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
   })
 );
-
-app.options("*", cors());
 
 // --------------------
 // HEALTH
@@ -39,16 +52,67 @@ app.get("/health", (_req, res) => {
 });
 
 // --------------------
-// LOGIN
+// 1) REDIRECT TO MINDX LOGIN
 // --------------------
-app.post("/auth/login", (_req, res) => {
-  const token = jwt.sign(
-    { id: "demo-user", name: "Demo User" },
-    SECRET,
-    { expiresIn: "5s" }
-  );
+app.get("/auth/login", (_req, res) => {
+  const params = qs.stringify({
+    client_id: OIDC_CLIENT_ID,
+    response_type: "code",
+    scope: "openid profile email",
+    redirect_uri: OIDC_REDIRECT_URI,
+  });
 
-  res.json({ token });
+  res.redirect(`${OIDC_ISSUER}/auth?${params}`);
+});
+
+// --------------------
+// 2) CALLBACK FROM MINDX
+// --------------------
+app.get("/auth/callback", async (req, res) => {
+  const code = req.query.code as string;
+
+  if (!code) {
+    return res.status(400).send("Missing code");
+  }
+
+  try {
+    const tokenRes = await axios.post(
+      `${OIDC_ISSUER}/token`,
+      qs.stringify({
+        grant_type: "authorization_code",
+        code,
+        redirect_uri: OIDC_REDIRECT_URI,
+      }),
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        auth: {
+          username: OIDC_CLIENT_ID,
+          password: OIDC_CLIENT_SECRET,
+        },
+      }
+    );
+
+    const idToken = tokenRes.data.id_token;
+    const decoded: any = jwt.decode(idToken);
+
+    const appToken = jwt.sign(
+      {
+        id: decoded.sub,
+        email: decoded.email || "",
+        name: decoded.name || "MindX User",
+      },
+      JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    // Redirect back to frontend with app token
+    res.redirect(`${FRONTEND_URL}/login-success?token=${appToken}`);
+  } catch (err: any) {
+    console.error("OIDC TOKEN ERROR:", err.response?.data || err.message);
+    res.status(500).send("OIDC login failed");
+  }
 });
 
 // --------------------
@@ -59,13 +123,6 @@ app.get("/protected", requireAuth, (req, res) => {
     message: "Protected",
     user: (req as any).user,
   });
-});
-
-// --------------------
-// CURRENT USER
-// --------------------
-app.get("/api/me", requireAuth, (req, res) => {
-  res.json((req as any).user);
 });
 
 // --------------------
