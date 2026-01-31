@@ -23,18 +23,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Restore session
+  // Restore session safely
   useEffect(() => {
     const saved = localStorage.getItem("token");
+
     if (saved) {
       try {
         const decoded = jwtDecode<User>(saved);
-        setToken(saved);
-        setUser(decoded);
+
+        // If expired → force logout
+        if (decoded.exp * 1000 < Date.now()) {
+          localStorage.removeItem("token");
+        } else {
+          setToken(saved);
+          setUser(decoded);
+        }
       } catch {
         localStorage.removeItem("token");
       }
     }
+
     setIsLoading(false);
   }, []);
 

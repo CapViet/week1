@@ -1,26 +1,21 @@
-import express, { Request, Response, NextFunction } from "express";
+import dotenv from "dotenv";
+dotenv.config();
+
+import express from "express";
 import cors from "cors";
-import jwt, { JwtPayload } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
+import { requireAuth } from "./middleware/requireAuth";
 
 const app = express();
-
 const PORT = Number(process.env.PORT) || 8080;
-const JWT_SECRET = process.env.JWT_SECRET || "dev-secret";
 
-// --------------------
-// Global types
-// --------------------
-declare global {
-  namespace Express {
-    interface Request {
-      user?: string | JwtPayload;
-    }
-  }
+// Load and validate secret
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET not set in environment");
 }
+const SECRET: string = JWT_SECRET;
 
-// --------------------
-// Middleware
-// --------------------
 app.use(express.json());
 
 app.use(
@@ -29,75 +24,48 @@ app.use(
       "http://localhost:5173",
       "https://week1-nu.vercel.app",
     ],
-    credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-// Preflight
 app.options("*", cors());
 
 // --------------------
-// Auth middleware
+// HEALTH
 // --------------------
-function requireAuth(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-  const header = req.headers.authorization;
-
-  if (!header) {
-    return res.status(401).json({ message: "Missing token" });
-  }
-
-  const token = header.replace("Bearer ", "");
-
-  try {
-    const payload = jwt.verify(token, JWT_SECRET);
-    req.user = payload;
-    next();
-  } catch {
-    return res.status(401).json({ message: "Invalid token" });
-  }
-}
-
-// --------------------
-// Routes
-// --------------------
-app.get("/", (_req: Request, res: Response) => {
-  res.send("Week1 API running 🚀");
-});
-
-app.get("/health", (_req: Request, res: Response) => {
+app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
-// 🔐 Fake login (temporary)
-app.post("/auth/login", (_req: Request, res: Response) => {
+// --------------------
+// LOGIN
+// --------------------
+app.post("/auth/login", (_req, res) => {
   const token = jwt.sign(
     { id: "demo-user", name: "Demo User" },
-    JWT_SECRET,
-    { expiresIn: "1h" }
+    SECRET,
+    { expiresIn: "5s" }
   );
 
   res.json({ token });
 });
 
-// 🔐 Placeholder OpenID callback
-app.get("/auth/callback", (_req: Request, res: Response) => {
+// --------------------
+// PROTECTED
+// --------------------
+app.get("/protected", requireAuth, (req, res) => {
   res.json({
-    message: "OpenID callback endpoint (not wired yet)",
+    message: "Protected",
+    user: (req as any).user,
   });
 });
 
-// 🔒 Protected route
-app.get("/protected", requireAuth, (req: Request, res: Response) => {
-  res.json({
-    message: "You accessed a protected route",
-    user: req.user,
-  });
+// --------------------
+// CURRENT USER
+// --------------------
+app.get("/api/me", requireAuth, (req, res) => {
+  res.json((req as any).user);
 });
 
 // --------------------
