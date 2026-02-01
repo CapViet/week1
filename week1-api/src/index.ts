@@ -38,7 +38,7 @@ app.use(
     origin: [
       FRONTEND_URL,
       "http://localhost:5173",
-      "https://week1-nu.vercel.app",
+      "https://week1-openid.vercel.app",
     ],
     credentials: true,
   })
