@@ -2,199 +2,177 @@
 
 ## Overview
 
-This project is the final result of **Week 1 of the MindX Engineer Onboarding program**.
-The goal was to go from **nothing** to a **fully deployed, authenticated, cloud-hosted full-stack system** using real production tools and architecture.
+This project is the final result of Week 1 of the MindX Engineer Onboarding program.
 
-By the end of this project, we built:
+The goal of this week was to design and deploy a real full-stack cloud system using modern production tools: containers, Kubernetes, cloud infrastructure, and secure authentication.
+
+By the end of this project, I built:
 
 * A containerized Node.js backend API
-* A React frontend application
-* Azure Container Registry (ACR) for images
-* Azure Kubernetes Service (AKS) to run the system
-* An Ingress Controller for public routing
-* Full frontend ↔ backend communication
-* Secure authentication using MindX OpenID
-* A production HTTPS deployment
+* A containerized React frontend
+* An Azure Container Registry (ACR) to store Docker images
+* An Azure Kubernetes Service (AKS) cluster to run the system
+* An Ingress Controller to expose services publicly
+* A JWT-based authentication system
+* A real OpenID authentication integration (MindX)
+* A production-style cloud deployment pipeline
 
-This is not a demo.
-It is a **real-world cloud architecture**, simplified for learning.
+Because OpenID requires HTTPS, the project runs in two environments:
 
----
+1. AKS + Ingress environment (HTTP, test JWT authentication)
+2. Production HTTPS environment (real MindX OpenID authentication)
 
-## What This System Does
+   * Backend: Azure Web App Service
+   * Frontend: Vercel
 
-This application is a **secure full-stack web system** made up of:
-
-* A **Node.js API** for authentication, business logic, and protected routes
-* A **React frontend** for user interaction
-* A **central OpenID provider (MindX)** for login
-* **Azure Kubernetes Service (AKS)** for orchestration
-* **Ingress routing** to expose everything through one public entry point
-
-The system follows a modern cloud authentication flow:
-
-1. A user opens the web app.
-2. Clicking “Login” redirects them to MindX OpenID.
-3. MindX authenticates the user.
-4. The user is redirected back to the API.
-5. The API exchanges the authorization code for a token.
-6. The API issues its own JWT.
-7. The user is redirected back to the frontend.
-8. The frontend stores the token and unlocks protected pages.
+This allows both infrastructure learning and real authentication to be demonstrated.
 
 ---
 
-## Architecture at a Glance
+## System Overview
 
-* The **Ingress Controller** is the public gateway.
-* It routes:
+This is a full-stack authenticated web application consisting of:
 
-  * `/` → React frontend
-  * `/api/*` → Node API
-* All authentication and protected requests pass through the backend.
-* JWT tokens secure all sensitive routes.
+* A React frontend for user interaction
+* A Node.js API for business logic and security
+* MindX OpenID as the identity provider
+* JWT tokens for session management
+* Azure cloud infrastructure for deployment
 
 ---
 
-## Step-by-Step Journey
+## Architecture Flow
 
-### Step 1 – From Local Code to Azure Containers
+1. User opens the web application.
+2. User clicks Login with MindX.
+3. Frontend redirects the user to the backend login endpoint.
+4. Backend redirects the user to MindX OpenID.
+5. User logs in at MindX.
+6. MindX redirects back to the backend callback URL.
+7. Backend exchanges the authorization code for an ID token.
+8. Backend creates its own JWT for the application.
+9. Backend redirects the user back to the frontend with this JWT.
+10. Frontend stores the token and unlocks protected routes.
+11. All protected API calls require this JWT.
 
-We started with a simple Node.js API and packaged it into a Docker container.
-The container was pushed to **Azure Container Registry (ACR)** and run in Azure.
+---
 
-This introduced:
+## Step-by-Step Implementation
 
-* Containerization
-* Cloud image storage
-* Cloud-hosted applications
+### Step 1 – Containerizing the Backend
+
+A Node.js API was built and structured for production use.
+It was packaged into a Docker image and pushed to Azure Container Registry.
 
 ---
 
 ### Step 2 – Running the API in Kubernetes (AKS)
 
-The API was deployed into **Azure Kubernetes Service (AKS)** using:
+The backend was deployed into Azure Kubernetes Service using:
 
-* Deployments
-* Services
-* Cluster networking
+* Kubernetes Deployments
+* Kubernetes Services
 
-Now the app ran inside a real Kubernetes environment.
+The API now ran inside a real container orchestration system.
 
 ---
 
 ### Step 3 – Exposing the API with Ingress
 
-An **NGINX Ingress Controller** was installed in AKS.
+An NGINX Ingress Controller was installed in the cluster.
 
-This created a single public gateway that could route traffic into the cluster.
-The API became accessible from the internet through clean, controlled routing.
-
----
-
-### Step 4 – Adding the React Web App
-
-The React frontend was:
-
-* Built into a container
-* Stored in ACR
-* Deployed to AKS
-
-Ingress rules were updated so:
-
-* `/` → frontend
-* `/api` → backend
-
-This created a **true full-stack cloud system**.
+This created a single public IP that routes traffic into the cluster.
 
 ---
 
-### Step 5 – Authentication with MindX OpenID
+### Step 4 – Adding the React Frontend
 
-Instead of a fake login system, we integrated **real OpenID authentication**.
+The React frontend was containerized and deployed into the same AKS cluster.
 
-The backend now:
+Ingress routing was configured so:
 
-* Redirects users to MindX
-* Handles the callback
-* Exchanges codes for tokens
-* Issues its own JWT
-* Protects private routes
+* The frontend is accessible from the public IP
+* The backend health check is accessible via /health
 
-The frontend now:
+This proves that both services are running and reachable through the same ingress:
 
-* Detects login success
-* Stores JWT tokens
-* Protects pages like Dashboard
-* Logs users out correctly
-
-This turned the system into a **secure, real-world application**.
+* Frontend: [http://20.239.116.30](http://20.239.116.30)
+* Backend: [http://20.239.116.30/health](http://20.239.116.30/health)
 
 ---
 
-### Step 6 – Production Readiness with Cloud HTTPS Hosting
+### Step 5 – Authentication
 
-To make the system production-ready, it was deployed using managed cloud platforms with **automatic HTTPS and domain handling**.
+Two authentication systems were implemented.
 
-#### Frontend on Vercel
+A. Test JWT Authentication (AKS)
 
-The React app was deployed to **Vercel**, which provides:
+Used for testing protected routes inside AKS:
 
-* Automatic HTTPS
-* Secure domains
-* Global CDN
-* Encrypted traffic
+* Backend signs JWT tokens
+* Frontend stores the token
+* Middleware verifies the token
+* Protected endpoints require authentication
 
-#### Backend on Azure Web App Service
+This demonstrates full JWT security flow.
 
-The Node.js API was deployed to **Azure Web App Service**, which provides:
+B. Real OpenID Authentication (MindX)
 
-* Built-in TLS
-* Secure environment variables
-* Scalable infrastructure
-* Public HTTPS endpoints
+To support secure login, real OpenID was integrated using MindX.
 
-This removed the need for manual TLS configuration and made the system safe for real users.
+Backend responsibilities:
+
+1. Redirect users to MindX login
+2. Receive authorization callback
+3. Exchange code for ID token
+4. Decode user identity
+5. Create app JWT
+6. Redirect back to frontend with token
+
+Frontend responsibilities:
+
+1. Redirect to backend login
+2. Detect login success
+3. Store JWT
+4. Protect routes
+5. Logout on token expiry
 
 ---
 
-## Key Skills Gained
+### Step 6 – Production HTTPS Deployment
 
-* Docker & containers
+OpenID requires HTTPS, so a production environment was created:
+
+* Backend hosted on Azure Web App Service
+* Frontend hosted on Vercel
+
+This version supports:
+
+* HTTPS
+* MindX OpenID
+* Secure cookies and tokens
+* Real-world deployment standards
+
+---
+
+## Key Skills Demonstrated
+
+* Docker and containerization
 * Azure cloud services
-* Kubernetes orchestration
+* Kubernetes (AKS)
 * Ingress routing
-* JWT authentication
-* OpenID integration
+* JWT security
+* OpenID authentication
 * Secrets management
-* Secure deployments
-* Full-stack cloud architecture
-
----
-
-## Why This Matters
-
-This project is not about a website.
-It is about understanding **how real cloud systems are built**.
-
-The same technologies used here are used by modern companies worldwide.
-
-This week proves the ability to:
-
-* Design
-* Deploy
-* Secure
-* And operate real systems
+* Frontend to backend security
+* Production deployments
 
 ---
 
 ## Final Result
 
-At the end of Week 1, this project delivers:
+This project demonstrates a complete real-world cloud architecture that is secure, scalable, authenticated, and production-ready.
 
-* A real cloud application
-* Secure authentication
-* Protected APIs
-* Scalable architecture
-* Production HTTPS hosting
-* A strong foundation for future work
+It shows the full journey from local code to cloud-native infrastructure.
+
+---
