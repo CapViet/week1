@@ -27,7 +27,7 @@ app.use((0, cors_1.default)({
     origin: [
         FRONTEND_URL,
         "http://localhost:5173",
-        "https://week1-nu.vercel.app",
+        "https://week1-openid.vercel.app",
     ],
     credentials: true,
 }));
@@ -46,8 +46,10 @@ app.get("/auth/login", (_req, res) => {
         response_type: "code",
         scope: "openid profile email",
         redirect_uri: OIDC_REDIRECT_URI,
+        state: "mindx",
+        prompt: "login",
     });
-    res.redirect(`${OIDC_ISSUER}/auth?${params}`);
+    res.redirect(`${OIDC_ISSUER}/authorize?${params}`);
 });
 // --------------------
 // 2) CALLBACK FROM MINDX
@@ -62,6 +64,7 @@ app.get("/auth/callback", async (req, res) => {
             grant_type: "authorization_code",
             code,
             redirect_uri: OIDC_REDIRECT_URI,
+            client_id: OIDC_CLIENT_ID,
         }), {
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
@@ -78,6 +81,7 @@ app.get("/auth/callback", async (req, res) => {
             email: decoded.email || "",
             name: decoded.name || "MindX User",
         }, JWT_SECRET, { expiresIn: "1h" });
+        // Redirect back to frontend with app token
         res.redirect(`${FRONTEND_URL}/login-success?token=${appToken}`);
     }
     catch (err) {

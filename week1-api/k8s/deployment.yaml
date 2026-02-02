@@ -16,7 +16,7 @@ spec:
         - name: acr-secret
       containers:
         - name: week1-api
-          image: mindxweek1acr123.azurecr.io/week1-api:openID
+          image: mindxweek1acr123.azurecr.io/week1-api:openIDv10
           ports:
             - containerPort: 8080
 
@@ -46,7 +46,7 @@ spec:
               value: "https://id-dev.mindx.edu.vn"
 
             - name: OIDC_REDIRECT_URI
-              value: "http://20.239.116.330/auth/callback"
+              value: "https://week1-api-asbbfkh5crchdwb4.eastasia-01.azurewebsites.net/auth/callback"
 
             - name: FRONTEND_URL
-              value: "http://20.239.116.330"
+              value: "https://week1-openid.vercel.app"

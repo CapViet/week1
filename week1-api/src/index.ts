@@ -60,8 +60,11 @@ app.get("/auth/login", (_req, res) => {
     response_type: "code",
     scope: "openid profile email",
     redirect_uri: OIDC_REDIRECT_URI,
+    state: "mindx",
+    prompt: "login",
   });
 
+  // ✅ MindX authorization endpoint
   res.redirect(`${OIDC_ISSUER}/auth?${params}`);
 });
 
@@ -76,20 +79,19 @@ app.get("/auth/callback", async (req, res) => {
   }
 
   try {
+    // ✅ client_secret_post (works for all MindX clients)
     const tokenRes = await axios.post(
       `${OIDC_ISSUER}/token`,
       qs.stringify({
         grant_type: "authorization_code",
         code,
         redirect_uri: OIDC_REDIRECT_URI,
+        client_id: OIDC_CLIENT_ID,
+        client_secret: OIDC_CLIENT_SECRET,
       }),
       {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
-        },
-        auth: {
-          username: OIDC_CLIENT_ID,
-          password: OIDC_CLIENT_SECRET,
         },
       }
     );
