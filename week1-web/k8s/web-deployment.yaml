@@ -16,7 +16,7 @@ spec:
         - name: acr-secret   
       containers:
         - name: week1-web
-          image: mindxweek1acr123.azurecr.io/week1-web:openIDv3
+          image: mindxweek1acr123.azurecr.io/week1-web:authFinal
           ports:
             - containerPort: 80
 
