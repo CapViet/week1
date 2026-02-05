@@ -1,3 +1,17 @@
+import "dotenv/config";
+import * as appInsights from "applicationinsights";
+
+
+appInsights.setup(process.env.APPINSIGHTS_CONNECTION_STRING)
+  .setAutoCollectRequests(true)
+  .setAutoCollectPerformance(true,true)
+  .setAutoCollectExceptions(true)
+  .setAutoCollectDependencies(true)
+  .setAutoCollectConsole(true)
+  .setSendLiveMetrics(true)
+  .start();
+
+
 import express from "express";
 import cors from "cors";
 import axios from "axios";
@@ -130,4 +144,23 @@ app.get("/protected", requireAuth, (req, res) => {
 // --------------------
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`API running on port ${PORT}`);
+});
+
+// temporary crash test endpoint
+app.get("/crash", (req, res) => {
+    setInterval(() => {
+    try {
+      throw new Error("ALERT LOOP");
+    } catch (e) {
+      appInsights.defaultClient.trackException({
+        exception: e as Error
+      });
+    }
+  }, 5000);
+});
+
+// temporary latency test endpoint
+app.get("/slow", async (req, res) => {
+  await new Promise(r => setTimeout(r, 3000));
+  res.send("Slow response");
 });
