@@ -11,7 +11,7 @@ function App() {
   const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
-  // 🔥 Track page views on route change
+  // Track page views on route change
   useEffect(() => {
     ReactGA.send({
       hitType: "pageview",
